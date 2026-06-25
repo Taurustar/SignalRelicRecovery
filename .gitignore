@@ -10,6 +10,13 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
+.DS_Store
+.kimi-code/
+/Packages/Coplay/
+Assets/Project Requirement Context.md
+Assets/Project Requirement Context.md.meta
+Assets/Signal_Relic_Recovery_Context.md
+Assets/Signal_Relic_Recovery_Context.md.meta
 .utmp/
 /[Ll]ibrary/
 /[Tt]emp/
