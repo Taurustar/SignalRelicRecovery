@@ -26,7 +26,13 @@ You are in a small training area with several relic stations. Each station emits
 | Select | Space, Enter, E | South Button (A) | Click station |
 | Back / Cancel | Escape | East Button (B) | Back button |
 
-## How to Run
+## Play Online
+
+A playable WebGL build is hosted on GitHub Pages:
+
+**https://taurustar.github.io/SignalRelicRecovery/WebGL/**
+
+## How to Run Locally
 
 1. Open the project in **Unity 6000.x** (URP 3D core template).
 2. Open `Assets/Scenes/MainScene.unity`.
