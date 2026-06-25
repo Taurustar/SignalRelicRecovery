@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SignalRelicRecovery
@@ -119,6 +120,13 @@ namespace SignalRelicRecovery
             SetPanel(hudPanel, true);
             SetPanel(resultsPanel, false);
             SetPanel(instructionsPanel, false);
+            ClearUISelection();
+        }
+
+        private static void ClearUISelection()
+        {
+            if (EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(null);
         }
 
         private void ShowResults()

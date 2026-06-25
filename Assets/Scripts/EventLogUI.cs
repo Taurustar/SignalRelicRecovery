@@ -14,6 +14,7 @@ namespace SignalRelicRecovery
         [SerializeField] private Text logText;
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private Button toggleButton;
+        [SerializeField] private Button closeButton;
 
         private readonly StringBuilder _stringBuilder = new();
 
@@ -24,6 +25,9 @@ namespace SignalRelicRecovery
 
             if (toggleButton != null)
                 toggleButton.onClick.AddListener(ToggleLog);
+
+            if (closeButton != null)
+                closeButton.onClick.AddListener(CloseLog);
 
             if (eventLogger != null)
             {
@@ -37,6 +41,9 @@ namespace SignalRelicRecovery
             if (toggleButton != null)
                 toggleButton.onClick.RemoveListener(ToggleLog);
 
+            if (closeButton != null)
+                closeButton.onClick.RemoveListener(CloseLog);
+
             if (eventLogger != null)
                 eventLogger.OnEventLogged -= OnEventLogged;
         }
@@ -45,6 +52,12 @@ namespace SignalRelicRecovery
         {
             if (logPanel != null)
                 logPanel.SetActive(!logPanel.activeSelf);
+        }
+
+        private void CloseLog()
+        {
+            if (logPanel != null)
+                logPanel.SetActive(false);
         }
 
         private void OnEventLogged(EventEntry entry)

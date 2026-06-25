@@ -152,7 +152,10 @@ namespace SignalRelicRecovery.Editor
             var canvasObj = new GameObject("UI Canvas");
             var canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObj.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            var scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
             canvasObj.AddComponent<GraphicRaycaster>();
 
             var uiManager = canvasObj.AddComponent<UIManager>();
@@ -178,11 +181,20 @@ namespace SignalRelicRecovery.Editor
 
             // HUD panel.
             var hudPanel = CreatePanel(canvasObj.transform, "HUDPanel");
-            var roundText = CreateText(hudPanel.transform, "RoundText", "Round 1 / 3", 28, new Vector2(-300, 220));
-            var targetText = CreateText(hudPanel.transform, "TargetText", "Target: humming", 28, new Vector2(0, 220));
-            var timerText = CreateText(hudPanel.transform, "TimerText", "Time: 0.0s", 28, new Vector2(300, 220));
-            var focusText = CreateText(hudPanel.transform, "FocusText", "Focused: none", 24, new Vector2(0, -220));
-            var announcementText = CreateText(hudPanel.transform, "AnnouncementText", "", 32, new Vector2(0, 150));
+            var roundText = CreateAnchoredText(hudPanel.transform, "RoundText", "Round 1 / 3", 28,
+                new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(300, 60));
+            var targetText = CreateAnchoredText(hudPanel.transform, "TargetText", "Target: humming", 28,
+                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -20), new Vector2(400, 60));
+            var timerText = CreateAnchoredText(hudPanel.transform, "TimerText", "Time: 0.0s", 28,
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -20), new Vector2(300, 60));
+            var focusText = CreateAnchoredText(hudPanel.transform, "FocusText", "Focused: none", 24,
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 20), new Vector2(600, 60));
+            var announcementText = CreateAnchoredText(hudPanel.transform, "AnnouncementText", "", 32,
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 120), new Vector2(900, 80));
+
+            // Log toggle button on HUD (top-right, below timer).
+            var logToggleBtn = CreateAnchoredButton(hudPanel.transform, "LogButton", "Log",
+                new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -90), new Vector2(120, 50));
 
             uiSo.FindProperty("hudPanel").objectReferenceValue = hudPanel;
             uiSo.FindProperty("roundText").objectReferenceValue = roundText;
@@ -235,12 +247,12 @@ namespace SignalRelicRecovery.Editor
             logTextRt.sizeDelta = new Vector2(0, 0);
             scrollRect.content = logTextRt;
 
-            var logTitle = CreateText(logPanel.transform, "LogTitle", "Event Log", 28, new Vector2(0, 220));
+            var logTitle = CreateAnchoredText(logPanel.transform, "LogTitle", "Event Log", 28,
+                new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -10), new Vector2(300, 50));
 
-            // Log toggle button on HUD.
-            var logToggleBtn = CreateButton(hudPanel.transform, "LogButton", "Log", new Vector2(360, 220));
-            var logToggleRt = logToggleBtn.GetComponent<RectTransform>();
-            logToggleRt.sizeDelta = new Vector2(80, 40);
+            // Close button inside the log panel.
+            var logCloseBtn = CreateAnchoredButton(logPanel.transform, "CloseButton", "Close",
+                new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 15), new Vector2(160, 45));
 
             // EventLogUI component.
             var eventLogUI = canvasObj.AddComponent<EventLogUI>();
@@ -250,6 +262,7 @@ namespace SignalRelicRecovery.Editor
             eventLogUISo.FindProperty("logText").objectReferenceValue = logText;
             eventLogUISo.FindProperty("scrollRect").objectReferenceValue = scrollRect;
             eventLogUISo.FindProperty("toggleButton").objectReferenceValue = logToggleBtn;
+            eventLogUISo.FindProperty("closeButton").objectReferenceValue = logCloseBtn;
             eventLogUISo.ApplyModifiedProperties();
 
             // Results panel.
@@ -328,11 +341,65 @@ namespace SignalRelicRecovery.Editor
             var image = obj.AddComponent<Image>();
             image.color = new Color(0.2f, 0.5f, 0.8f);
             var button = obj.AddComponent<Button>();
+            var buttonSo = new SerializedObject(button);
+            buttonSo.FindProperty("m_TargetGraphic").objectReferenceValue = image;
+            buttonSo.ApplyModifiedProperties();
             var rt = obj.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = anchoredPosition;
             rt.sizeDelta = new Vector2(240, 50);
+
+            var textObj = new GameObject("Text");
+            textObj.transform.SetParent(obj.transform, false);
+            var text = textObj.AddComponent<Text>();
+            text.text = label;
+            text.fontSize = 24;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+            var textRt = textObj.GetComponent<RectTransform>();
+            textRt.anchorMin = Vector2.zero;
+            textRt.anchorMax = Vector2.one;
+            textRt.offsetMin = Vector2.zero;
+            textRt.offsetMax = Vector2.zero;
+
+            return button;
+        }
+
+        private static Text CreateAnchoredText(Transform parent, string name, string content, int fontSize,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 sizeDelta)
+        {
+            var obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+            var text = obj.AddComponent<Text>();
+            text.text = content;
+            text.fontSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+            var rt = obj.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.anchoredPosition = anchoredPosition;
+            rt.sizeDelta = sizeDelta;
+            return text;
+        }
+
+        private static Button CreateAnchoredButton(Transform parent, string name, string label,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 sizeDelta)
+        {
+            var obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+            var image = obj.AddComponent<Image>();
+            image.color = new Color(0.2f, 0.5f, 0.8f);
+            var button = obj.AddComponent<Button>();
+            var buttonSo = new SerializedObject(button);
+            buttonSo.FindProperty("m_TargetGraphic").objectReferenceValue = image;
+            buttonSo.ApplyModifiedProperties();
+            var rt = obj.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.anchoredPosition = anchoredPosition;
+            rt.sizeDelta = sizeDelta;
 
             var textObj = new GameObject("Text");
             textObj.transform.SetParent(obj.transform, false);
