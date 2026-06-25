@@ -96,6 +96,20 @@ This prototype is a slice of a larger mobile action game. In the **Integrity Dis
 - The `AnnouncementManager` pattern can drive native mobile screen readers or in-engine TTS.
 - New station types, hazards, timers, and scoring modifiers can be added without rewriting the core flow.
 
+## Recording a Playthrough Video
+
+To create the required short video of one successful playthrough:
+
+1. Open the playable link in a browser: https://taurustar.github.io/SignalRelicRecovery/WebGL/
+2. Start a screen recorder:
+   - **macOS:** QuickTime Player > File > New Screen Recording
+   - **Windows:** Xbox Game Bar (Win+G) or OBS
+   - **Linux:** OBS
+3. Click **Start Training** and complete all 3 rounds.
+4. Stop recording and save the video.
+
+For the best demonstration, keep Accessibility Mode off for the first recording so both the visual HUD and audio announcements are clear.
+
 ## Credits
 
 - Unity Technologies — Unity Engine, URP, Input System.
