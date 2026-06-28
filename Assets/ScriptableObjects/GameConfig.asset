@@ -25,4 +25,15 @@ MonoBehaviour:
   accessibilityAnnouncementDuration: 4
   standardAnnouncementDuration: 2.5
   accessibilityTextScale: 1.3
+  accessibilityActivationKey: 1
+  repeatTargetKey: 34
+  showIntroSplash: 1
+  introVoiceClip: {fileID: 8300000, guid: f9b50b7e19fea49788133a1cc27658b5, type: 3}
+  instructionsVoiceClip: {fileID: 8300000, guid: 89b21c5becfc945bb9d18c3e453dc89f, type: 3}
+  targetDescriptorClips:
+  - {fileID: 8300000, guid: 09855dbf8a45c47e7a3c7eeede75a8e9, type: 3}
+  - {fileID: 8300000, guid: 4ceff778be05847959a6115de0e79b5f, type: 3}
+  - {fileID: 8300000, guid: 0f4b187010f07426da314fd2cafe7795, type: 3}
+  - {fileID: 8300000, guid: 18be23178cf3748edaf449909e610f8b, type: 3}
+  - {fileID: 8300000, guid: f210f2356a12f40068bca2023107c7e3, type: 3}
   allowRetryAfterWrongSelection: 1

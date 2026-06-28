@@ -114,3 +114,22 @@ For the best demonstration, keep Accessibility Mode off for the first recording 
 
 - Unity Technologies — Unity Engine, URP, Input System.
 - Audio — AI-generated sound effects for prototype use.
+
+## Changelog
+
+### Accessibility Update
+
+The previous public build (`/WebGL/`) did not include dedicated accessibility onboarding or a narrator to guide the player. This update adds those capabilities while keeping the original build unchanged at **`https://taurustar.github.io/SignalRelicRecovery/WebGL/`**.
+
+The new accessibility build is hosted at:
+
+**https://taurustar.github.io/SignalRelicRecovery/WebGL-Accessibility/**
+
+What was added:
+
+- **Intro splash screen** at startup with a prompt to press **Space** to enable accessibility mode.
+- **Listen to Instructions** button on the main menu (visible only when accessibility mode is on). It plays a voiced instructions clip and automatically returns to the menu when finished.
+- **Voiced narrator target announcements** in accessibility mode. At the start of each round the narrator says which station descriptor to find (e.g., "Find the humming station").
+- **Repeat target key** — press **T** during gameplay to hear the current target again.
+- **Configurable keys and audio clips** in `GameConfig` (`accessibilityActivationKey`, `repeatTargetKey`, `introVoiceClip`, `instructionsVoiceClip`, `targetDescriptorClips`).
+- **Separate WebGL build folder** (`docs/WebGL-Accessibility/`) so the previous version remains available and unaffected.

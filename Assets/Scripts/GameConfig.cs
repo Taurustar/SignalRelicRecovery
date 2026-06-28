@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SignalRelicRecovery
 {
@@ -51,6 +52,24 @@ namespace SignalRelicRecovery
 
         [Tooltip("Larger text scale used in accessibility mode.")]
         public float accessibilityTextScale = 1.3f;
+
+        [Tooltip("Keyboard key that turns on accessibility mode from the intro splash.")]
+        public Key accessibilityActivationKey = Key.Space;
+
+        [Tooltip("Keyboard key that repeats the current target descriptor during accessibility gameplay.")]
+        public Key repeatTargetKey = Key.T;
+
+        [Tooltip("Show the accessibility intro splash on startup.")]
+        public bool showIntroSplash = true;
+
+        [Tooltip("Voiced introduction played on the intro splash.")]
+        public AudioClip introVoiceClip;
+
+        [Tooltip("Voiced instructions played by the Listen to Instructions button.")]
+        public AudioClip instructionsVoiceClip;
+
+        [Tooltip("Voiced clips for each target descriptor, parallel to the station definitions list.")]
+        public AudioClip[] targetDescriptorClips;
 
         [Header("Gameplay")]
         [Tooltip("If true, the player can keep trying after a wrong selection.")]

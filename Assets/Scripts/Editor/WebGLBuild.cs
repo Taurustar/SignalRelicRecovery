@@ -47,5 +47,31 @@ namespace SignalRelicRecovery.Editor
             else
                 Debug.LogError($"WebGL build for Pages failed: {report.summary.result}");
         }
+
+        [MenuItem("Signal Relic Recovery/Build WebGL for GitHub Pages (Accessibility)")]
+        public static void BuildForPagesAccessibility()
+        {
+            var previousCompression = PlayerSettings.WebGL.compressionFormat;
+            var previousTemplate = PlayerSettings.WebGL.template;
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
+            PlayerSettings.WebGL.template = "PROJECT:Minimal16x9";
+
+            string docsPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "docs");
+            string buildPath = Path.Combine(docsPath, "WebGL-Accessibility");
+            if (Directory.Exists(buildPath))
+                Directory.Delete(buildPath, true);
+            Directory.CreateDirectory(buildPath);
+
+            var scenes = new[] { "Assets/Scenes/MainScene.unity" };
+            var report = BuildPipeline.BuildPlayer(scenes, buildPath, BuildTarget.WebGL, BuildOptions.None);
+
+            PlayerSettings.WebGL.compressionFormat = previousCompression;
+            PlayerSettings.WebGL.template = previousTemplate;
+
+            if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
+                Debug.Log($"WebGL accessibility build for Pages succeeded: {buildPath}");
+            else
+                Debug.LogError($"WebGL accessibility build for Pages failed: {report.summary.result}");
+        }
     }
 }

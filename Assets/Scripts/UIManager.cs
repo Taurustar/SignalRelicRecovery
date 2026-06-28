@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SignalRelicRecovery
@@ -13,18 +14,22 @@ namespace SignalRelicRecovery
         [SerializeField] private GameManager gameManager;
         [SerializeField] private AnnouncementManager announcementManager;
         [SerializeField] private StationFocusManager focusManager;
+        [SerializeField] private InputReader inputReader;
 
         [Header("Panels")]
         [SerializeField] private GameObject menuPanel;
         [SerializeField] private GameObject hudPanel;
         [SerializeField] private GameObject resultsPanel;
         [SerializeField] private GameObject instructionsPanel;
+        [SerializeField] private GameObject accessibilitySplashPanel;
 
         [Header("Menu UI")]
         [SerializeField] private Button startButton;
         [SerializeField] private Button instructionsButton;
+        [SerializeField] private Button listenInstructionsButton;
         [SerializeField] private Button quitButton;
         [SerializeField] private Toggle accessibilityToggle;
+        [SerializeField] private Text accessibilityHintText;
 
         [Header("HUD UI")]
         [SerializeField] private Text roundText;
@@ -41,14 +46,16 @@ namespace SignalRelicRecovery
         [Header("Instructions UI")]
         [SerializeField] private Button closeInstructionsButton;
 
+        private bool _waitingForActivation;
+
         private void Start()
         {
-            ShowMenu();
-
             if (startButton != null)
                 startButton.onClick.AddListener(OnStartClicked);
             if (instructionsButton != null)
                 instructionsButton.onClick.AddListener(OnInstructionsClicked);
+            if (listenInstructionsButton != null)
+                listenInstructionsButton.onClick.AddListener(OnListenInstructionsClicked);
             if (quitButton != null)
                 quitButton.onClick.AddListener(OnQuitClicked);
             if (restartButton != null)
@@ -73,10 +80,30 @@ namespace SignalRelicRecovery
 
             if (announcementManager != null)
                 announcementManager.OnAnnouncementText += OnAnnouncement;
+
+            if (inputReader != null)
+                inputReader.OnAnnounceTarget += OnRepeatTargetRequested;
+
+            ApplyAccessibilityTextScale(config.accessibilityModeDefault);
+            UpdateListenButtonVisibility(config.accessibilityModeDefault);
+
+            if (config.showIntroSplash)
+                ShowAccessibilitySplash();
+            else
+                ShowMenu();
         }
 
         private void Update()
         {
+            if (_waitingForActivation && Keyboard.current != null)
+            {
+                var key = config.accessibilityActivationKey;
+                if (Keyboard.current[key].wasPressedThisFrame)
+                {
+                    EnableAccessibilityFromSplash();
+                }
+            }
+
             if (gameManager != null && gameManager.CurrentState == GameState.Playing)
             {
                 if (timerText != null)
@@ -104,6 +131,9 @@ namespace SignalRelicRecovery
 
             if (announcementManager != null)
                 announcementManager.OnAnnouncementText -= OnAnnouncement;
+
+            if (inputReader != null)
+                inputReader.OnAnnounceTarget -= OnRepeatTargetRequested;
         }
 
         private void ShowMenu()
@@ -112,6 +142,45 @@ namespace SignalRelicRecovery
             SetPanel(hudPanel, false);
             SetPanel(resultsPanel, false);
             SetPanel(instructionsPanel, false);
+            SetPanel(accessibilitySplashPanel, false);
+            ClearUISelection();
+            _waitingForActivation = false;
+        }
+
+        private void ShowAccessibilitySplash()
+        {
+            SetPanel(menuPanel, false);
+            SetPanel(hudPanel, false);
+            SetPanel(resultsPanel, false);
+            SetPanel(instructionsPanel, false);
+            SetPanel(accessibilitySplashPanel, true);
+            ClearUISelection();
+            _waitingForActivation = true;
+
+            if (accessibilityHintText != null)
+                accessibilityHintText.text = $"Press {config.accessibilityActivationKey} to enable accessibility mode.";
+
+            if (announcementManager != null && config.introVoiceClip != null)
+                announcementManager.Announce(string.Empty, config.introVoiceClip);
+        }
+
+        private void EnableAccessibilityFromSplash()
+        {
+            _waitingForActivation = false;
+
+            if (gameManager != null)
+                gameManager.AccessibilityMode = true;
+
+            if (accessibilityToggle != null)
+                accessibilityToggle.isOn = true;
+
+            ApplyAccessibilityTextScale(true);
+            UpdateListenButtonVisibility(true);
+
+            if (announcementManager != null)
+                announcementManager.Announce("Accessibility mode enabled.");
+
+            ShowMenu();
         }
 
         private void ShowHud()
@@ -170,6 +239,24 @@ namespace SignalRelicRecovery
             SetPanel(menuPanel, true);
         }
 
+        private void OnListenInstructionsClicked()
+        {
+            if (announcementManager == null || config.instructionsVoiceClip == null)
+                return;
+
+            SetMenuButtonsInteractable(false);
+            announcementManager.Announce(string.Empty, config.instructionsVoiceClip, () =>
+            {
+                SetMenuButtonsInteractable(true);
+                ClearUISelection();
+            });
+        }
+
+        private void OnRepeatTargetRequested()
+        {
+            gameManager?.RepeatTargetAnnouncement();
+        }
+
         private void OnQuitClicked()
         {
 #if UNITY_WEBGL && !UNITY_EDITOR
@@ -197,6 +284,22 @@ namespace SignalRelicRecovery
                 gameManager.AccessibilityMode = value;
 
             ApplyAccessibilityTextScale(value);
+            UpdateListenButtonVisibility(value);
+        }
+
+        private void UpdateListenButtonVisibility(bool accessible)
+        {
+            if (listenInstructionsButton != null)
+                listenInstructionsButton.gameObject.SetActive(accessible);
+        }
+
+        private void SetMenuButtonsInteractable(bool interactable)
+        {
+            if (startButton != null) startButton.interactable = interactable;
+            if (instructionsButton != null) instructionsButton.interactable = interactable;
+            if (listenInstructionsButton != null) listenInstructionsButton.interactable = interactable;
+            if (quitButton != null) quitButton.interactable = interactable;
+            if (accessibilityToggle != null) accessibilityToggle.interactable = interactable;
         }
 
         private void ApplyAccessibilityTextScale(bool enabled)

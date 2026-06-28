@@ -8,4 +8,10 @@ public static class RunWebGLBuild
     {
         WebGLBuild.BuildForPages();
     }
+
+    [MenuItem("Signal Relic Recovery/Run WebGL Accessibility Build for Pages")]
+    public static void ExecuteAccessibility()
+    {
+        WebGLBuild.BuildForPagesAccessibility();
+    }
 }

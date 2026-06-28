@@ -36,11 +36,40 @@ namespace SignalRelicRecovery
 
             if (audioClip != null && voiceSource != null)
             {
+                StopAllCoroutines();
                 voiceSource.Stop();
                 voiceSource.clip = audioClip;
                 voiceSource.volume = config.announcementVolume;
                 voiceSource.Play();
             }
+        }
+
+        /// <summary>
+        /// Announces a message via text and audio, then invokes a callback when the audio finishes.
+        /// </summary>
+        public void Announce(string text, AudioClip audioClip, Action onFinished)
+        {
+            OnAnnouncementText?.Invoke(text);
+
+            if (audioClip != null && voiceSource != null)
+            {
+                StopAllCoroutines();
+                voiceSource.Stop();
+                voiceSource.clip = audioClip;
+                voiceSource.volume = config.announcementVolume;
+                voiceSource.Play();
+                StartCoroutine(WaitForClip(audioClip.length, onFinished));
+            }
+            else
+            {
+                onFinished?.Invoke();
+            }
+        }
+
+        private IEnumerator WaitForClip(float duration, Action onFinished)
+        {
+            yield return new WaitForSeconds(duration);
+            onFinished?.Invoke();
         }
 
         /// <summary>

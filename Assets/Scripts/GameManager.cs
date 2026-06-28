@@ -110,7 +110,8 @@ namespace SignalRelicRecovery
                 station.Configure(def.stationName, def.soundDescriptor, def.audioClip);
 
                 // Round 3: intermittent sounds to test memory and timing.
-                if (CurrentRound >= 2)
+                // In accessibility mode, keep sounds continuous so the narrator direction is clear.
+                if (CurrentRound >= 2 && !AccessibilityMode)
                     station.SetIntermittentMode(true, 0.8f, 1.6f);
 
                 _activeStations.Add(station);
@@ -123,8 +124,16 @@ namespace SignalRelicRecovery
             _roundTimerCoroutine = StartCoroutine(RunRoundTimer());
 
             string targetText = BuildTargetAnnouncement(CurrentTarget);
-            AnnouncementManager.Instance?.AnnounceTimed(targetText,
-                config.AnnouncementDuration(AccessibilityMode));
+            if (AccessibilityMode)
+            {
+                AudioClip targetClip = FindTargetClip(CurrentTarget);
+                AnnouncementManager.Instance?.Announce(targetText, targetClip);
+            }
+            else
+            {
+                AnnouncementManager.Instance?.AnnounceTimed(targetText,
+                    config.AnnouncementDuration(AccessibilityMode));
+            }
 
             eventLogger?.LogRoundStarted(CurrentRound + 1, config.TotalRounds, CurrentTarget.SoundDescriptor);
 
@@ -234,6 +243,34 @@ namespace SignalRelicRecovery
             {
                 return $"Round 3. Listen carefully. Find the {target.SoundDescriptor} station.";
             }
+        }
+
+        private AudioClip FindTargetClip(RelicStation target)
+        {
+            if (config.targetDescriptorClips == null || stationDefinitions == null)
+                return null;
+
+            int index = System.Array.FindIndex(stationDefinitions,
+                def => def.soundDescriptor.Equals(target.SoundDescriptor, System.StringComparison.OrdinalIgnoreCase));
+
+            if (index >= 0 && index < config.targetDescriptorClips.Length)
+                return config.targetDescriptorClips[index];
+
+            return null;
+        }
+
+        /// <summary>
+        /// Re-announces the current target descriptor while in accessibility mode.
+        /// Called by the repeat-target input binding.
+        /// </summary>
+        public void RepeatTargetAnnouncement()
+        {
+            if (!AccessibilityMode || CurrentTarget == null) return;
+            if (CurrentState != GameState.Playing && CurrentState != GameState.RoundFeedback) return;
+
+            string targetText = BuildTargetAnnouncement(CurrentTarget);
+            AudioClip targetClip = FindTargetClip(CurrentTarget);
+            AnnouncementManager.Instance?.Announce(targetText, targetClip);
         }
 
         private void CleanupStations()

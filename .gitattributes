@@ -108,6 +108,9 @@ Packages/packages-lock.json linguist-generated
 *.wav                   lfs
 *.xm                    lfs
 
+# Accessibility voice clips are small; keep them in normal Git storage.
+Assets/Audio/Voice/*.wav -lfs
+
 # Video
 *.asf                   lfs
 *.avi                   lfs

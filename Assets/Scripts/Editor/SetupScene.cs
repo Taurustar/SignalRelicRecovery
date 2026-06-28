@@ -21,6 +21,9 @@ namespace SignalRelicRecovery.Editor
             // Load assets.
             var config = AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/ScriptableObjects/GameConfig.asset");
             var inputAsset = AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions");
+
+            // Voice clips will be assigned after they are loaded below.
+            // We defer saving the config asset until all clips are available.
             var relicPrefab = AssetDatabase.LoadAssetAtPath<RelicStation>("Assets/Prefabs/RelicStation.prefab");
             var stationMats = new[]
             {
@@ -38,6 +41,28 @@ namespace SignalRelicRecovery.Editor
                 AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Station_Drip.mp3"),
                 AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Station_Pulse.mp3")
             };
+
+            var voiceClips = new[]
+            {
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Target_Hum.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Target_Buzz.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Target_Beep.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Target_Drip.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Target_Pulse.wav")
+            };
+            var introClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/intro.wav");
+            var instructionsClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/instructions.wav");
+
+            // Assign voice clips to the shared config asset so GameManager can use them.
+            if (config != null)
+            {
+                config.introVoiceClip = introClip;
+                config.instructionsVoiceClip = instructionsClip;
+                if (config.targetDescriptorClips == null || config.targetDescriptorClips.Length != voiceClips.Length)
+                    config.targetDescriptorClips = new AudioClip[voiceClips.Length];
+                for (int i = 0; i < voiceClips.Length; i++)
+                    config.targetDescriptorClips[i] = voiceClips[i];
+            }
 
             // Camera.
             var cameraObj = new GameObject("Main Camera");
@@ -164,18 +189,28 @@ namespace SignalRelicRecovery.Editor
             uiSo.FindProperty("gameManager").objectReferenceValue = gameManager;
             uiSo.FindProperty("announcementManager").objectReferenceValue = announcementManager;
             uiSo.FindProperty("focusManager").objectReferenceValue = focusManager;
+            uiSo.FindProperty("inputReader").objectReferenceValue = inputReader;
+
+            // Accessibility intro splash (shown before the menu).
+            var splashPanel = CreatePanel(canvasObj.transform, "AccessibilitySplashPanel");
+            var splashTitle = CreateText(splashPanel.transform, "Title", "Signal Relic Recovery", 48, new Vector2(0, 80));
+            var splashHint = CreateText(splashPanel.transform, "Hint", "Press Space to enable accessibility mode.", 28, new Vector2(0, -20));
 
             // Menu panel.
             var menuPanel = CreatePanel(canvasObj.transform, "MenuPanel");
             var menuTitle = CreateText(menuPanel.transform, "Title", "Signal Relic Recovery", 48, new Vector2(0, 150));
-            var startBtn = CreateButton(menuPanel.transform, "StartButton", "Start Training", new Vector2(0, 60));
-            var instrBtn = CreateButton(menuPanel.transform, "InstructionsButton", "Instructions", new Vector2(0, -10));
-            var accessibilityToggle = CreateToggle(menuPanel.transform, "AccessibilityToggle", "Accessibility Mode", new Vector2(0, -80));
-            var quitBtn = CreateButton(menuPanel.transform, "QuitButton", "Quit", new Vector2(0, -150));
+            var startBtn = CreateButton(menuPanel.transform, "StartButton", "Start Training", new Vector2(0, 90));
+            var instrBtn = CreateButton(menuPanel.transform, "InstructionsButton", "Instructions", new Vector2(0, 20));
+            var listenInstrBtn = CreateButton(menuPanel.transform, "ListenInstructionsButton", "Listen to Instructions", new Vector2(0, -50));
+            var accessibilityToggle = CreateToggle(menuPanel.transform, "AccessibilityToggle", "Accessibility Mode", new Vector2(0, -120));
+            var quitBtn = CreateButton(menuPanel.transform, "QuitButton", "Quit", new Vector2(0, -190));
 
+            uiSo.FindProperty("accessibilitySplashPanel").objectReferenceValue = splashPanel;
+            uiSo.FindProperty("accessibilityHintText").objectReferenceValue = splashHint;
             uiSo.FindProperty("menuPanel").objectReferenceValue = menuPanel;
             uiSo.FindProperty("startButton").objectReferenceValue = startBtn;
             uiSo.FindProperty("instructionsButton").objectReferenceValue = instrBtn;
+            uiSo.FindProperty("listenInstructionsButton").objectReferenceValue = listenInstrBtn;
             uiSo.FindProperty("quitButton").objectReferenceValue = quitBtn;
             uiSo.FindProperty("accessibilityToggle").objectReferenceValue = accessibilityToggle;
 
@@ -297,6 +332,13 @@ namespace SignalRelicRecovery.Editor
             uiSo.FindProperty("closeInstructionsButton").objectReferenceValue = closeInstrBtn;
 
             uiSo.ApplyModifiedProperties();
+
+            // Persist voice-clip references in the shared config asset.
+            if (config != null)
+            {
+                EditorUtility.SetDirty(config);
+                AssetDatabase.SaveAssets();
+            }
 
             // Save scene.
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/MainScene.unity");

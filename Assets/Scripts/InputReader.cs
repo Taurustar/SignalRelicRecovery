@@ -16,6 +16,7 @@ namespace SignalRelicRecovery
         public event Action OnFocusNext;
         public event Action OnSelect;
         public event Action OnPause;
+        public event Action OnAnnounceTarget;
 
         private InputActionMap _gameplayMap;
         private InputActionMap _uiMap;
@@ -24,6 +25,7 @@ namespace SignalRelicRecovery
         private InputAction _nextAction;
         private InputAction _selectAction;
         private InputAction _pauseAction;
+        private InputAction _announceTargetAction;
 
         private void OnEnable()
         {
@@ -40,11 +42,13 @@ namespace SignalRelicRecovery
             _previousAction = _gameplayMap.FindAction("Previous", true);
             _nextAction = _gameplayMap.FindAction("Next", true);
             _selectAction = _gameplayMap.FindAction("Interact", true);
+            _announceTargetAction = _gameplayMap.FindAction("AnnounceTarget", true);
             _pauseAction = _uiMap.FindAction("Cancel", true);
 
             _previousAction.performed += OnPreviousPerformed;
             _nextAction.performed += OnNextPerformed;
             _selectAction.performed += OnSelectPerformed;
+            _announceTargetAction.performed += OnAnnounceTargetPerformed;
             _pauseAction.performed += OnPausePerformed;
 
             _gameplayMap.Enable();
@@ -56,6 +60,7 @@ namespace SignalRelicRecovery
             if (_previousAction != null) _previousAction.performed -= OnPreviousPerformed;
             if (_nextAction != null) _nextAction.performed -= OnNextPerformed;
             if (_selectAction != null) _selectAction.performed -= OnSelectPerformed;
+            if (_announceTargetAction != null) _announceTargetAction.performed -= OnAnnounceTargetPerformed;
             if (_pauseAction != null) _pauseAction.performed -= OnPausePerformed;
 
             _gameplayMap?.Disable();
@@ -65,6 +70,7 @@ namespace SignalRelicRecovery
         private void OnPreviousPerformed(InputAction.CallbackContext ctx) => OnFocusPrevious?.Invoke();
         private void OnNextPerformed(InputAction.CallbackContext ctx) => OnFocusNext?.Invoke();
         private void OnSelectPerformed(InputAction.CallbackContext ctx) => OnSelect?.Invoke();
+        private void OnAnnounceTargetPerformed(InputAction.CallbackContext ctx) => OnAnnounceTarget?.Invoke();
         private void OnPausePerformed(InputAction.CallbackContext ctx) => OnPause?.Invoke();
     }
 }

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Signal Relic Recovery</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      }
+      #unity-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #unity-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 1280px;
+        aspect-ratio: 16 / 9;
+        background: #000;
+      }
+      #unity-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #unity-loading-bar {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #fff;
+        display: block;
+      }
+      #unity-progress-bar-empty {
+        width: 200px;
+        height: 16px;
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      #unity-progress-bar-full {
+        width: 0%;
+        height: 100%;
+        background: #4a90e2;
+        transition: width 0.1s linear;
+      }
+      #unity-warning {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        text-align: center;
+        z-index: 10;
+      }
+      #unity-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        font-size: 14px;
+      }
+      #unity-fullscreen-button {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        background: #fff;
+        mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>') no-repeat center;
+        -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>') no-repeat center;
+        mask-size: contain;
+        -webkit-mask-size: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <div id="unity-wrapper">
+        <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+          <div>Loading...</div>
+          <div id="unity-progress-bar-empty">
+            <div id="unity-progress-bar-full"></div>
+          </div>
+        </div>
+        <div id="unity-warning"></div>
+        <div id="unity-footer">
+          <div>Signal Relic Recovery</div>
+          <div id="unity-fullscreen-button"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        if (type == 'error') div.style = 'background: red; padding: 8px 12px; border-radius: 4px; margin-bottom: 4px;';
+        else if (type == 'warning') div.style = 'background: yellow; color: #000; padding: 8px 12px; border-radius: 4px; margin-bottom: 4px;';
+        warningBanner.appendChild(div);
+        if (type != 'error') {
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/WebGL-Accessibility.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/WebGL-Accessibility.data",
+        frameworkUrl: buildUrl + "/WebGL-Accessibility.framework.js",
+        codeUrl: buildUrl + "/WebGL-Accessibility.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Signal Relic Recovery",
+        productVersion: "0.1.0",
+        showBanner: unityShowBanner,
+      };
+
+      var container = document.querySelector("#unity-container");
+      var wrapper = document.querySelector("#unity-wrapper");
+
+      function resizeCanvas() {
+        var windowWidth = window.innerWidth;
+        var windowHeight = window.innerHeight;
+        var targetRatio = 16 / 9;
+        var windowRatio = windowWidth / windowHeight;
+
+        if (windowRatio > targetRatio) {
+          wrapper.style.height = windowHeight + "px";
+          wrapper.style.width = (windowHeight * targetRatio) + "px";
+        } else {
+          wrapper.style.width = windowWidth + "px";
+          wrapper.style.height = (windowWidth / targetRatio) + "px";
+        }
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      document.querySelector("#unity-loading-bar").style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          document.querySelector("#unity-loading-bar").style.display = "none";
+          document.querySelector("#unity-fullscreen-button").onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
