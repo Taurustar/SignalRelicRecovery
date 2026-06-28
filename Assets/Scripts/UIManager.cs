@@ -15,6 +15,7 @@ namespace SignalRelicRecovery
         [SerializeField] private AnnouncementManager announcementManager;
         [SerializeField] private StationFocusManager focusManager;
         [SerializeField] private InputReader inputReader;
+        [SerializeField] private AccessibleMenuNavigator menuNavigator;
 
         [Header("Panels")]
         [SerializeField] private GameObject menuPanel;
@@ -82,7 +83,12 @@ namespace SignalRelicRecovery
                 announcementManager.OnAnnouncementText += OnAnnouncement;
 
             if (inputReader != null)
+            {
                 inputReader.OnAnnounceTarget += OnRepeatTargetRequested;
+                inputReader.OnRestart += OnRestartRequested;
+                inputReader.OnReturnToMenu += OnReturnToMenuRequested;
+                inputReader.OnPause += OnPauseRequested;
+            }
 
             ApplyAccessibilityTextScale(config.accessibilityModeDefault);
             UpdateListenButtonVisibility(config.accessibilityModeDefault);
@@ -133,8 +139,15 @@ namespace SignalRelicRecovery
                 announcementManager.OnAnnouncementText -= OnAnnouncement;
 
             if (inputReader != null)
+            {
                 inputReader.OnAnnounceTarget -= OnRepeatTargetRequested;
+                inputReader.OnRestart -= OnRestartRequested;
+                inputReader.OnReturnToMenu -= OnReturnToMenuRequested;
+                inputReader.OnPause -= OnPauseRequested;
+            }
         }
+
+        private bool AccessibilityModeActive => gameManager != null ? gameManager.AccessibilityMode : config.accessibilityModeDefault;
 
         private void ShowMenu()
         {
@@ -143,8 +156,12 @@ namespace SignalRelicRecovery
             SetPanel(resultsPanel, false);
             SetPanel(instructionsPanel, false);
             SetPanel(accessibilitySplashPanel, false);
-            ClearUISelection();
             _waitingForActivation = false;
+
+            if (AccessibilityModeActive)
+                menuNavigator?.OpenPanel(startButton, config.menuContextClip, "Main menu.");
+            else
+                ClearUISelection();
         }
 
         private void ShowAccessibilitySplash()
@@ -178,7 +195,7 @@ namespace SignalRelicRecovery
             UpdateListenButtonVisibility(true);
 
             if (announcementManager != null)
-                announcementManager.Announce("Accessibility mode enabled.");
+                announcementManager.Announce("Accessibility mode enabled.", config.accessibilityEnabledClip);
 
             ShowMenu();
         }
@@ -215,6 +232,11 @@ namespace SignalRelicRecovery
                     $"Time: {gameManager.TotalElapsedTime:F1}s\n\n" +
                     $"Result: {(gameManager.CorrectSelections >= config.TotalRounds ? "Passed" : "Review Needed")}";
             }
+
+            if (AccessibilityModeActive)
+                menuNavigator?.OpenPanel(restartButton, config.resultsContextClip, "Training complete.");
+            else
+                ClearUISelection();
         }
 
         private void SetPanel(GameObject panel, bool active)
@@ -231,12 +253,17 @@ namespace SignalRelicRecovery
         {
             SetPanel(menuPanel, false);
             SetPanel(instructionsPanel, true);
+
+            if (AccessibilityModeActive)
+                menuNavigator?.OpenPanel(closeInstructionsButton, config.instructionsContextClip, "How to Play.");
+            else
+                ClearUISelection();
         }
 
         private void OnCloseInstructionsClicked()
         {
             SetPanel(instructionsPanel, false);
-            SetPanel(menuPanel, true);
+            ShowMenu();
         }
 
         private void OnListenInstructionsClicked()
@@ -248,13 +275,45 @@ namespace SignalRelicRecovery
             announcementManager.Announce(string.Empty, config.instructionsVoiceClip, () =>
             {
                 SetMenuButtonsInteractable(true);
-                ClearUISelection();
+                if (AccessibilityModeActive)
+                    menuNavigator?.OpenPanel(startButton, null, null);
+                else
+                    ClearUISelection();
             });
         }
 
         private void OnRepeatTargetRequested()
         {
             gameManager?.RepeatTargetAnnouncement();
+        }
+
+        private void OnRestartRequested()
+        {
+            if (gameManager == null) return;
+            if (gameManager.CurrentState == GameState.Results || gameManager.CurrentState == GameState.Menu)
+                OnRestartClicked();
+        }
+
+        private void OnReturnToMenuRequested()
+        {
+            if (gameManager == null) return;
+            if (gameManager.CurrentState == GameState.Playing ||
+                gameManager.CurrentState == GameState.Results ||
+                gameManager.CurrentState == GameState.RoundFeedback)
+            {
+                OnReturnToMenuClicked();
+            }
+        }
+
+        private void OnPauseRequested()
+        {
+            if (gameManager == null) return;
+            if (gameManager.CurrentState == GameState.Playing ||
+                gameManager.CurrentState == GameState.Results ||
+                gameManager.CurrentState == GameState.RoundFeedback)
+            {
+                OnReturnToMenuClicked();
+            }
         }
 
         private void OnQuitClicked()
@@ -315,6 +374,9 @@ namespace SignalRelicRecovery
         private void OnGameStarted()
         {
             ShowHud();
+
+            if (AccessibilityModeActive && announcementManager != null && config.gameplayMenuHintClip != null)
+                announcementManager.Announce("Press Escape to return to the main menu.", config.gameplayMenuHintClip);
         }
 
         private void OnRoundStarted()

@@ -17,6 +17,8 @@ namespace SignalRelicRecovery
         public event Action OnSelect;
         public event Action OnPause;
         public event Action OnAnnounceTarget;
+        public event Action OnRestart;
+        public event Action OnReturnToMenu;
 
         private InputActionMap _gameplayMap;
         private InputActionMap _uiMap;
@@ -26,6 +28,8 @@ namespace SignalRelicRecovery
         private InputAction _selectAction;
         private InputAction _pauseAction;
         private InputAction _announceTargetAction;
+        private InputAction _restartAction;
+        private InputAction _returnToMenuAction;
 
         private void OnEnable()
         {
@@ -43,12 +47,16 @@ namespace SignalRelicRecovery
             _nextAction = _gameplayMap.FindAction("Next", true);
             _selectAction = _gameplayMap.FindAction("Interact", true);
             _announceTargetAction = _gameplayMap.FindAction("AnnounceTarget", true);
+            _restartAction = _gameplayMap.FindAction("Restart", true);
+            _returnToMenuAction = _gameplayMap.FindAction("ReturnToMenu", true);
             _pauseAction = _uiMap.FindAction("Cancel", true);
 
             _previousAction.performed += OnPreviousPerformed;
             _nextAction.performed += OnNextPerformed;
             _selectAction.performed += OnSelectPerformed;
             _announceTargetAction.performed += OnAnnounceTargetPerformed;
+            _restartAction.performed += OnRestartPerformed;
+            _returnToMenuAction.performed += OnReturnToMenuPerformed;
             _pauseAction.performed += OnPausePerformed;
 
             _gameplayMap.Enable();
@@ -61,6 +69,8 @@ namespace SignalRelicRecovery
             if (_nextAction != null) _nextAction.performed -= OnNextPerformed;
             if (_selectAction != null) _selectAction.performed -= OnSelectPerformed;
             if (_announceTargetAction != null) _announceTargetAction.performed -= OnAnnounceTargetPerformed;
+            if (_restartAction != null) _restartAction.performed -= OnRestartPerformed;
+            if (_returnToMenuAction != null) _returnToMenuAction.performed -= OnReturnToMenuPerformed;
             if (_pauseAction != null) _pauseAction.performed -= OnPausePerformed;
 
             _gameplayMap?.Disable();
@@ -71,6 +81,8 @@ namespace SignalRelicRecovery
         private void OnNextPerformed(InputAction.CallbackContext ctx) => OnFocusNext?.Invoke();
         private void OnSelectPerformed(InputAction.CallbackContext ctx) => OnSelect?.Invoke();
         private void OnAnnounceTargetPerformed(InputAction.CallbackContext ctx) => OnAnnounceTarget?.Invoke();
+        private void OnRestartPerformed(InputAction.CallbackContext ctx) => OnRestart?.Invoke();
+        private void OnReturnToMenuPerformed(InputAction.CallbackContext ctx) => OnReturnToMenu?.Invoke();
         private void OnPausePerformed(InputAction.CallbackContext ctx) => OnPause?.Invoke();
     }
 }

@@ -131,5 +131,7 @@ What was added:
 - **Listen to Instructions** button on the main menu (visible only when accessibility mode is on). It plays a voiced instructions clip and automatically returns to the menu when finished.
 - **Voiced narrator target announcements** in accessibility mode. At the start of each round the narrator says which station descriptor to find (e.g., "Find the humming station").
 - **Repeat target key** — press **T** during gameplay to hear the current target again.
-- **Configurable keys and audio clips** in `GameConfig` (`accessibilityActivationKey`, `repeatTargetKey`, `introVoiceClip`, `instructionsVoiceClip`, `targetDescriptorClips`).
+- **Voice-guided menu navigation** for blind players. When accessibility mode is on, the narrator announces each focused menu option and how to select it; panel-opening context clips guide the player through the main menu, instructions panel, and results panel.
+- **End-of-game keyboard shortcuts** — press **R** to restart or **M** to return to the main menu from the results screen. Press **Escape** during gameplay to return to the menu.
+- **Configurable keys and audio clips** in `GameConfig`.
 - **Separate WebGL build folder** (`docs/WebGL-Accessibility/`) so the previous version remains available and unaffected.

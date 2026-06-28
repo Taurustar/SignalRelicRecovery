@@ -71,6 +71,22 @@ namespace SignalRelicRecovery
         [Tooltip("Voiced clips for each target descriptor, parallel to the station definitions list.")]
         public AudioClip[] targetDescriptorClips;
 
+        [Header("Accessible Menu Voice")]
+        [Tooltip("Clip played when the main menu opens.")]
+        public AudioClip menuContextClip;
+
+        [Tooltip("Clip played when the results panel opens.")]
+        public AudioClip resultsContextClip;
+
+        [Tooltip("Clip played when the instructions panel opens.")]
+        public AudioClip instructionsContextClip;
+
+        [Tooltip("Clip played at game start reminding how to return to the menu.")]
+        public AudioClip gameplayMenuHintClip;
+
+        [Tooltip("Clip played when accessibility mode is enabled from the intro splash.")]
+        public AudioClip accessibilityEnabledClip;
+
         [Header("Gameplay")]
         [Tooltip("If true, the player can keep trying after a wrong selection.")]
         public bool allowRetryAfterWrongSelection = true;

@@ -53,7 +53,19 @@ namespace SignalRelicRecovery.Editor
             var introClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/intro.wav");
             var instructionsClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/instructions.wav");
 
-            // Assign voice clips to the shared config asset so GameManager can use them.
+            // Menu/context voice clips for accessibility navigation.
+            var menuContextClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/MenuContext.wav");
+            var resultsContextClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/ResultsContext.wav");
+            var instructionsContextClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/InstructionsContext.wav");
+            var gameplayMenuHintClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/GameplayMenuHint.wav");
+            var accessibilityEnabledClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/AccessibilityEnabled.wav");
+            var startButtonClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/StartButton.wav");
+            var instructionsButtonClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/InstructionsButton.wav");
+            var listenInstructionsButtonClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/ListenInstructionsButton.wav");
+            var accessibilityToggleClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/AccessibilityToggle.wav");
+            var quitButtonClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/Voice/Menu/QuitButton.wav");
+
+            // Assign voice clips to the shared config asset so GameManager and UIManager can use them.
             if (config != null)
             {
                 config.introVoiceClip = introClip;
@@ -62,6 +74,12 @@ namespace SignalRelicRecovery.Editor
                     config.targetDescriptorClips = new AudioClip[voiceClips.Length];
                 for (int i = 0; i < voiceClips.Length; i++)
                     config.targetDescriptorClips[i] = voiceClips[i];
+
+                config.menuContextClip = menuContextClip;
+                config.resultsContextClip = resultsContextClip;
+                config.instructionsContextClip = instructionsContextClip;
+                config.gameplayMenuHintClip = gameplayMenuHintClip;
+                config.accessibilityEnabledClip = accessibilityEnabledClip;
             }
 
             // Camera.
@@ -191,6 +209,14 @@ namespace SignalRelicRecovery.Editor
             uiSo.FindProperty("focusManager").objectReferenceValue = focusManager;
             uiSo.FindProperty("inputReader").objectReferenceValue = inputReader;
 
+            var menuNavigator = canvasObj.AddComponent<AccessibleMenuNavigator>();
+            var navSo = new SerializedObject(menuNavigator);
+            navSo.FindProperty("gameManager").objectReferenceValue = gameManager;
+            navSo.FindProperty("announcementManager").objectReferenceValue = announcementManager;
+            navSo.ApplyModifiedProperties();
+
+            uiSo.FindProperty("menuNavigator").objectReferenceValue = menuNavigator;
+
             // Accessibility intro splash (shown before the menu).
             var splashPanel = CreatePanel(canvasObj.transform, "AccessibilitySplashPanel");
             var splashTitle = CreateText(splashPanel.transform, "Title", "Signal Relic Recovery", 48, new Vector2(0, 80));
@@ -199,11 +225,13 @@ namespace SignalRelicRecovery.Editor
             // Menu panel.
             var menuPanel = CreatePanel(canvasObj.transform, "MenuPanel");
             var menuTitle = CreateText(menuPanel.transform, "Title", "Signal Relic Recovery", 48, new Vector2(0, 150));
-            var startBtn = CreateButton(menuPanel.transform, "StartButton", "Start Training", new Vector2(0, 90));
-            var instrBtn = CreateButton(menuPanel.transform, "InstructionsButton", "Instructions", new Vector2(0, 20));
-            var listenInstrBtn = CreateButton(menuPanel.transform, "ListenInstructionsButton", "Listen to Instructions", new Vector2(0, -50));
-            var accessibilityToggle = CreateToggle(menuPanel.transform, "AccessibilityToggle", "Accessibility Mode", new Vector2(0, -120));
-            var quitBtn = CreateButton(menuPanel.transform, "QuitButton", "Quit", new Vector2(0, -190));
+            var startBtn = CreateButton(menuPanel.transform, "StartButton", "Start Training", new Vector2(0, 90), startButtonClip, "Press Enter to begin.", true);
+            var instrBtn = CreateButton(menuPanel.transform, "InstructionsButton", "Instructions", new Vector2(0, 20), instructionsButtonClip, "Press Enter to read how to play.", true);
+            var listenInstrBtn = CreateButton(menuPanel.transform, "ListenInstructionsButton", "Listen to Instructions", new Vector2(0, -50), listenInstructionsButtonClip, "Press Enter to hear the instructions.", true);
+            var accessibilityToggle = CreateToggle(menuPanel.transform, "AccessibilityToggle", "Accessibility Mode", new Vector2(0, -120), accessibilityToggleClip, "Press Enter to toggle.");
+            var quitBtn = CreateButton(menuPanel.transform, "QuitButton", "Quit", new Vector2(0, -190), quitButtonClip, "Press Enter to quit.", true);
+
+            SetupVerticalNavigation(startBtn, instrBtn, listenInstrBtn, accessibilityToggle, quitBtn);
 
             uiSo.FindProperty("accessibilitySplashPanel").objectReferenceValue = splashPanel;
             uiSo.FindProperty("accessibilityHintText").objectReferenceValue = splashHint;
@@ -304,8 +332,10 @@ namespace SignalRelicRecovery.Editor
             var resultsPanel = CreatePanel(canvasObj.transform, "ResultsPanel");
             var resultsTitle = CreateText(resultsPanel.transform, "Title", "Training Complete", 42, new Vector2(0, 150));
             var resultsText = CreateText(resultsPanel.transform, "ResultsText", "Results...", 28, new Vector2(0, 0));
-            var restartBtn = CreateButton(resultsPanel.transform, "RestartButton", "Restart", new Vector2(0, -120));
-            var resultsMenuBtn = CreateButton(resultsPanel.transform, "MenuButton", "Main Menu", new Vector2(0, -190));
+            var restartBtn = CreateButton(resultsPanel.transform, "RestartButton", "Restart", new Vector2(0, -120), null, "Press Enter to play again.", true);
+            var resultsMenuBtn = CreateButton(resultsPanel.transform, "MenuButton", "Main Menu", new Vector2(0, -190), null, "Press Enter to return to the main menu.", true);
+
+            SetupVerticalNavigation(restartBtn, resultsMenuBtn);
 
             uiSo.FindProperty("resultsPanel").objectReferenceValue = resultsPanel;
             uiSo.FindProperty("resultsText").objectReferenceValue = resultsText;
@@ -326,7 +356,7 @@ namespace SignalRelicRecovery.Editor
                 "Mouse / Touch = Click a station directly\n\n" +
                 "Accessibility Mode adds longer announcements and larger text.",
                 22, new Vector2(0, -20));
-            var closeInstrBtn = CreateButton(instrPanel.transform, "CloseButton", "Back", new Vector2(0, -180));
+            var closeInstrBtn = CreateButton(instrPanel.transform, "CloseButton", "Back", new Vector2(0, -180), null, "Press Enter to go back.", true);
 
             uiSo.FindProperty("instructionsPanel").objectReferenceValue = instrPanel;
             uiSo.FindProperty("closeInstructionsButton").objectReferenceValue = closeInstrBtn;
@@ -376,7 +406,8 @@ namespace SignalRelicRecovery.Editor
             return text;
         }
 
-        private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
+        private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition,
+            AudioClip announcementClip = null, string hint = null, bool accessible = false)
         {
             var obj = new GameObject(name);
             obj.transform.SetParent(parent, false);
@@ -405,6 +436,16 @@ namespace SignalRelicRecovery.Editor
             textRt.offsetMin = Vector2.zero;
             textRt.offsetMax = Vector2.zero;
 
+            if (accessible)
+            {
+                var item = obj.AddComponent<AccessibleMenuItem>();
+                var itemSo = new SerializedObject(item);
+                itemSo.FindProperty("label").stringValue = label;
+                itemSo.FindProperty("hint").stringValue = hint ?? "Press Enter to select.";
+                itemSo.FindProperty("announcementClip").objectReferenceValue = announcementClip;
+                itemSo.ApplyModifiedProperties();
+            }
+
             return button;
         }
 
@@ -427,7 +468,8 @@ namespace SignalRelicRecovery.Editor
         }
 
         private static Button CreateAnchoredButton(Transform parent, string name, string label,
-            Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 sizeDelta)
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Vector2 sizeDelta,
+            AudioClip announcementClip = null, string hint = null, bool accessible = false)
         {
             var obj = new GameObject(name);
             obj.transform.SetParent(parent, false);
@@ -456,10 +498,21 @@ namespace SignalRelicRecovery.Editor
             textRt.offsetMin = Vector2.zero;
             textRt.offsetMax = Vector2.zero;
 
+            if (accessible)
+            {
+                var item = obj.AddComponent<AccessibleMenuItem>();
+                var itemSo = new SerializedObject(item);
+                itemSo.FindProperty("label").stringValue = label;
+                itemSo.FindProperty("hint").stringValue = hint ?? "Press Enter to select.";
+                itemSo.FindProperty("announcementClip").objectReferenceValue = announcementClip;
+                itemSo.ApplyModifiedProperties();
+            }
+
             return button;
         }
 
-        private static Toggle CreateToggle(Transform parent, string name, string label, Vector2 anchoredPosition)
+        private static Toggle CreateToggle(Transform parent, string name, string label, Vector2 anchoredPosition,
+            AudioClip announcementClip = null, string hint = null)
         {
             var obj = new GameObject(name);
             obj.transform.SetParent(parent, false);
@@ -504,7 +557,27 @@ namespace SignalRelicRecovery.Editor
             labelRt.anchoredPosition = new Vector2(20, 0);
             labelRt.sizeDelta = new Vector2(200, 40);
 
+            var item = obj.AddComponent<AccessibleMenuItem>();
+            var itemSo = new SerializedObject(item);
+            itemSo.FindProperty("label").stringValue = label;
+            itemSo.FindProperty("hint").stringValue = hint ?? "Press Enter to toggle.";
+            itemSo.FindProperty("announcementClip").objectReferenceValue = announcementClip;
+            itemSo.ApplyModifiedProperties();
+
             return toggle;
+        }
+
+        private static void SetupVerticalNavigation(params Selectable[] selectables)
+        {
+            for (int i = 0; i < selectables.Length; i++)
+            {
+                if (selectables[i] == null) continue;
+                var nav = selectables[i].navigation;
+                nav.mode = Navigation.Mode.Explicit;
+                nav.selectOnUp = selectables[i > 0 ? i - 1 : selectables.Length - 1];
+                nav.selectOnDown = selectables[i < selectables.Length - 1 ? i + 1 : 0];
+                selectables[i].navigation = nav;
+            }
         }
     }
 }
